@@ -27,11 +27,11 @@ $('#add-train').on('click', function(){
     // add values to variables
     name = $('#name-input').val();
     destination = $('#dest-input').val();
-    time = $('#time-input').val();
-    frequency = $('#freq-input').val();
+    time = $('#time-input').val().trim();
+    frequency = $('#freq-input').val().trim();
 
     console.log("name: "+ name, "dest: " + destination,"time: " + time, "freq: " + frequency);
-
+if (name!="" && destination!="" && time!="" && frequency!="") {
     // clear values of each input
     $('#name-input').val("");
     $('#dest-input').val("");
@@ -45,8 +45,9 @@ $('#add-train').on('click', function(){
         time,
         frequency
     });
-
-    
+} else {
+    alert("All fields have not been filled in.")
+};   
 })
 
 // take all existing firebase data & show it in the table
@@ -67,20 +68,39 @@ database.ref().on("value", function(snapshot) {
       var newFreq = childSnapshot.val().frequency;
       
       console.log(newName, newDest, newTime, newFreq);
-    //   calculate next arrival
 
-    //   calculate minutes away
+    //MOMENT.JS TIME TRACKER
+    //PUSH BACK FIRST TIME BY 1 YEAR TO ASSURE IT COMES BEFORE CURRENT TIME
+    var trainTimeConverted = moment(newTime, "hh:mm").subtract(1, "years");
+    console.log(trainTimeConverted);
+    //Current Time
+    var currentTime = moment();
+    console.log("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
+    //TIME DIFFERENCE 
+    var timeDiff = moment().diff(moment(trainTimeConverted), "minutes");
+    console.log("DIFFERENCE IN TIME: " + timeDiff);
+    //TRAIN TIME APART
+    var timeApart = timeDiff % newFreq;
+    console.log(timeApart);
+    //MINUTES UNTIL NEXT TRAIN
+    var arrivalTrain = newFreq - timeApart;
+    console.log("MINUTES TILL TRAIN: " + arrivalTrain);
+
+    //NEXT TRAIN ARRIVAL
+    var nextTrain = moment().add(arrivalTrain, "minutes");
+    var nextTrainTimeConverted = moment(nextTrain).format("hh:mm");
+    console.log("ARRIVAL TIME: " + moment(nextTrain).format("hh:mm"));
       
     //   outline layout for where data goes in table
       var showName = $('<th scope="row">').text(newName);
       var showDest = $('<td>').text(newDest);
-      var showTime = $('<td>').text(newTime);
       var showFreq = $('<td>').text(newFreq);
-      var showdist = $('<td>').text("x");
+      var showDist = $('<td>').text(nextTrainTimeConverted);
+      var showMin = $('<td>').text(arrivalTrain);
       
       
       // upate the DOM w/ info
-      var row = $('<tr>').append(showName, showDest, showTime, showFreq);
+      var row = $('<tr>').append(showName, showDest, showFreq, showDist, showMin);
       $('#show-trains').prepend(row);
      
         });
